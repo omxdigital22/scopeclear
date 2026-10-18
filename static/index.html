@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F6F8">
+<title>ScopeClear</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📐</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --ink:#1B2230; --muted:#5C6677; --rule:#DCE0E7; --press:#ECEEF2;
+  --red:#B4232C; --red-bg:#FBEDEE; --green:#13704A; --green-bg:#E8F4EE;
+  --amber:#8F5D00; --amber-bg:#FCF3DF; --blue:#2B4ACB; --blue-bg:#EBEEFB;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --nav-h:64px; --col:600px;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#12161D;--surface:#1A1F28;--ink:#E7EAF0;--muted:#9AA3B2;--rule:#2C3340;--press:#232937;
+    --red:#F07A7F;--red-bg:#3A1F23;--green:#5BC79A;--green-bg:#17332A;--amber:#E2B45A;--amber-bg:#3A2F17;--blue:#8EA2FF;--blue-bg:#232B4A;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#12161D;--surface:#1A1F28;--ink:#E7EAF0;--muted:#9AA3B2;--rule:#2C3340;--press:#232937;
+  --red:#F07A7F;--red-bg:#3A1F23;--green:#5BC79A;--green-bg:#17332A;--amber:#E2B45A;--amber-bg:#3A2F17;--blue:#8EA2FF;--blue-bg:#232B4A;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.col{max-width:var(--col);margin:0 auto;padding:0 16px}
+.muted{color:var(--muted)} .small{font-size:14px} .xs{font-size:13px}
+.ok{color:var(--green)} .bad{color:var(--red);font-weight:600}
+
+/* app bar */
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg)}
+.appbar .col{display:flex;align-items:center;gap:10px;min-height:56px}
+.mark{font-weight:700;font-size:18px;display:flex;align-items:center;gap:7px;flex:none}
+.proj{flex:1;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me{flex:none;border:1px solid var(--rule);background:var(--surface);border-radius:20px;padding:5px 12px;font-size:14px;min-height:36px}
+.mockbar{background:var(--amber-bg);color:var(--amber);font-size:13px;padding:7px 16px;text-align:center}
+
+main{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 24px)}
+body.detail main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:28px 0 10px}
+h2{font-size:22px;letter-spacing:-.01em;margin:18px 0 4px}
+.sub{color:var(--muted);margin:0 0 16px;font-size:15px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:12px;border:1px solid var(--rule);background:var(--surface);font-weight:600;font-size:16px}
+.btn:active{background:var(--press)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.approve{background:var(--green);border-color:var(--green);color:#fff}
+.btn.reject{color:var(--red)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.link{border:0;background:none;padding:6px 0;color:var(--blue);font-weight:600;font-size:15px}
+
+/* bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--surface);border-top:1px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav .col{display:grid;grid-template-columns:repeat(4,1fr);height:var(--nav-h);padding:0}
+.nav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);position:relative}
+.nav button svg{width:24px;height:24px}
+.nav button[aria-current="page"]{color:var(--ink)}
+.nav .badge{position:absolute;top:7px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;line-height:18px;text-align:center}
+body.detail .nav,body.start .nav{display:none}
+
+/* start */
+.hero{padding:6px 0 0}
+.hero p{color:var(--muted);font-size:17px;margin:0 0 22px}
+.steps{list-style:none;padding:0;margin:26px 0 0;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--rule);font-size:15px}
+.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--surface);border:1px solid var(--rule);display:grid;place-items:center;font-size:13px;font-weight:700}
+.own{margin-top:24px;padding:16px;background:var(--surface);border:1px solid var(--rule);border-radius:14px}
+.own input{width:100%;min-height:48px;padding:0 12px;border:1px solid var(--rule);border-radius:10px;background:var(--bg);margin:8px 0 10px;font-size:16px}
+
+/* lists */
+.group{background:var(--surface);border:1px solid var(--rule);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.ghead{padding:14px 16px 4px}
+.ghead h3{margin:0;font-size:16px}
+.ghead p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-top:1px solid var(--rule);background:none;padding:12px 16px;min-height:60px}
+.ghead + .item{border-top:0}
+.item:active{background:var(--press)}
+.item .ic{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--bg)}
+.item .ic svg{width:20px;height:20px}
+.item .tx{flex:1;min-width:0}
+.item .t1{font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .t2{font-size:13px;color:var(--muted)}
+.item .chev{flex:none;color:var(--muted)}
+.adders{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 16px 16px;border-top:1px solid var(--rule)}
+.adders.one{grid-template-columns:1fr}
+.adders .btn{min-height:44px;font-size:15px}
+.cta{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));z-index:7;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:16px 0 12px}
+.cta .xs{text-align:center;margin-top:6px}
+body.has-cta main{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 110px)}
+
+/* review list */
+.progress{margin:6px 0 14px}
+.bar{height:8px;border-radius:4px;background:var(--rule);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green);border-radius:4px}
+.plabel{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:6px}
+.chips{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 12px;padding:2px 16px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:1px solid var(--rule);background:var(--surface);border-radius:20px;padding:0 14px;min-height:36px;font-size:14px;font-weight:500}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dot{flex:none;width:10px;height:10px;border-radius:50%}
+.dot.addition{background:var(--blue)} .dot.modification{background:var(--amber)} .dot.contradiction{background:var(--red)} .dot.unclear{background:var(--muted)}
+.pill{flex:none;font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px}
+.pill.pending{background:var(--amber-bg);color:var(--amber)}
+.pill.approved{background:var(--green-bg);color:var(--green)}
+.pill.rejected{background:var(--red-bg);color:var(--red)}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px}
+.summary div{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:10px 12px}
+.summary b{display:block;font-size:20px}
+.summary span{font-size:12px;color:var(--muted)}
+
+/* detail */
+.dtop{display:flex;align-items:center;justify-content:space-between;margin:4px 0 6px}
+.tag{display:inline-block;font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px;margin-top:6px}
+.tag.addition{background:var(--blue-bg);color:var(--blue)}
+.tag.modification{background:var(--amber-bg);color:var(--amber)}
+.tag.contradiction{background:var(--red-bg);color:var(--red)}
+.tag.unclear{background:var(--rule);color:var(--ink)}
+.dtitle{font-size:24px;line-height:1.2;letter-spacing:-.01em;margin:8px 0 14px}
+.redline .side{padding:14px 16px;border-radius:14px}
+.redline .was{background:var(--red-bg)}
+.redline .now{background:var(--green-bg)}
+.redline .lbl{font-size:13px;font-weight:700;margin-bottom:4px}
+.redline .was .lbl{color:var(--red)} .redline .now .lbl{color:var(--green)}
+.redline p{margin:0;font:18px/1.5 var(--serif)}
+.redline .was p{text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+.redline .was.none p{text-decoration:none;font-style:italic;color:var(--muted)}
+.redline .now p{text-decoration:underline;text-decoration-color:var(--green);text-underline-offset:4px;text-decoration-thickness:1.5px}
+.redline .arrow{display:flex;justify-content:center;color:var(--muted);height:28px;align-items:center}
+.section{margin-top:18px}
+.section h4{font-size:15px;margin:0 0 8px}
+.evsum{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--rule);background:var(--surface);border-radius:12px;padding:12px 14px;text-align:left;min-height:52px}
+.evsum > span:first-child{flex:1;line-height:1.35}
+.evsum .link{flex:none}
+.evlist{margin-top:8px;background:var(--surface);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+.ev{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--rule);background:none;padding:12px 14px}
+.ev:first-child{border-top:0}
+.ev:active{background:var(--press)}
+.ev .role{font-size:12px;font-weight:700;color:var(--muted)}
+.ev q{display:block;font:16px/1.5 var(--serif);margin:2px 0 4px}
+.ev .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.ev .src{color:var(--blue);font-weight:600}
+.issues{padding:12px 14px;background:var(--red-bg);color:var(--red);border-radius:12px;font-size:14px;margin-top:10px}
+.issues p{margin:2px 0}
+.q{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.q label{display:block;font-weight:600;line-height:1.35}
+.q .req{display:inline-block;font-size:12px;font-weight:700;color:var(--amber);background:var(--amber-bg);padding:1px 7px;border-radius:5px;margin-bottom:6px}
+.q .opt{display:inline-block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.q .why{font-size:13px;color:var(--muted);margin:3px 0 8px}
+.q textarea,.note textarea,.sheet textarea{width:100%;min-height:52px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;background:var(--bg);resize:vertical;font-size:16px}
+.q .ans{font:16px/1.5 var(--serif)}
+.note{margin-top:10px}
+.result{border-radius:14px;padding:14px 16px;margin-top:18px}
+.result.approved{background:var(--green-bg)} .result.rejected{background:var(--red-bg)}
+.result strong{display:block}
+.result ul{margin:8px 0 0;padding-left:18px;font-size:14px}
+
+.actionbar{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--surface);border-top:1px solid var(--rule);padding:10px 0 calc(12px + env(safe-area-inset-bottom,0px))}
+.actionbar .hint{font-size:13px;color:var(--muted);text-align:center;margin:0 0 8px}
+.actionbar .row{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.actionbar .row.nav2{grid-template-columns:1fr 1fr}
+
+/* checklist */
+.toolbar{display:flex;gap:8px;align-items:center;margin:6px 0 12px;flex-wrap:wrap}
+.toolbar select{min-height:40px;padding:0 10px;border:1px solid var(--rule);border-radius:10px;background:var(--surface);font-size:15px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px;margin-left:auto}
+.toggle input{width:20px;height:20px}
+.task{display:flex;gap:12px;padding:12px 16px;border-top:1px solid var(--rule)}
+.task:first-child{border-top:0}
+.task .tid{flex:none;font-size:12px;font-weight:700;color:var(--muted);width:30px;padding-top:3px}
+.task .tx{flex:1;min-width:0}
+.task .was{text-decoration:line-through;color:var(--red);font-size:14px}
+.task.removed .ttl{text-decoration:line-through;color:var(--muted)}
+.task .from{font-size:13px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.task .from button{border:0;background:none;padding:0;color:var(--blue);font-size:13px;font-weight:600}
+.lab-new{color:var(--green);font-weight:700} .lab-upd{color:var(--amber);font-weight:700}
+
+/* history */
+.hist{list-style:none;padding:0 0 0 4px;margin:8px 0 0}
+.hist li{position:relative;padding:0 0 18px 22px;border-left:2px solid var(--rule)}
+.hist li:last-child{border-left-color:transparent}
+.hist li::before{content:"";position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--muted);border:2px solid var(--bg)}
+.hist li.approved::before{background:var(--green)} .hist li.rejected::before{background:var(--red)}
+.hist .when{font-size:12px;color:var(--muted)}
+.hist .what{font-weight:600;line-height:1.35}
+.hist details{font-size:14px;margin-top:4px}
+.hist summary{color:var(--blue);font-weight:600;cursor:pointer;padding:4px 0}
+.hist .det{padding-top:4px}
+.hist q{font-family:var(--serif)}
+
+/* sheets */
+dialog.sheet{border:0;padding:0;margin:auto auto 0;width:100%;max-width:var(--col);max-height:88vh;border-radius:18px 18px 0 0;background:var(--surface);color:var(--ink)}
+dialog.sheet::backdrop{background:rgb(0 0 0 / .4)}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--rule);margin:8px auto 4px}
+.sheet .sh{display:flex;align-items:center;gap:10px;padding:6px 16px 10px;border-bottom:1px solid var(--rule)}
+.sheet .sh strong{flex:1;font-size:17px}
+.sheet .sb{padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px));overflow:auto;max-height:calc(88vh - 70px)}
+.sheet .txt{font:17px/1.6 var(--serif);white-space:pre-wrap}
+.sheet .chunk{padding:10px 0;border-top:1px solid var(--rule)}
+.sheet .chunk:first-child{border-top:0}
+.sheet .chunk b{font:700 12px var(--sans);color:var(--muted);display:block}
+.sheet .chunk div{font:16px/1.55 var(--serif);white-space:pre-wrap}
+.sheet input[type=text]{width:100%;min-height:48px;padding:0 12px;border:1px solid var(--rule);border-radius:10px;background:var(--bg);margin-bottom:10px;font-size:16px}
+mark{background:var(--amber-bg);color:inherit;padding:0 2px;border-bottom:2px solid var(--amber)}
+
+/* overlay + toast */
+.overlay{position:fixed;inset:0;z-index:20;background:color-mix(in srgb,var(--bg) 94%,transparent);display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.on{display:flex}
+.pipe{background:var(--surface);border:1px solid var(--rule);border-radius:18px;padding:22px;max-width:440px;width:100%}
+.pipe h3{margin:0 0 4px;font-size:19px} .pipe p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.pipe ol{margin:0;padding:0;list-style:none;counter-reset:s}
+.pipe li{counter-increment:s;display:flex;gap:12px;padding:7px 0;color:var(--muted)}
+.pipe li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--rule);display:grid;place-items:center;font-size:13px;font-weight:700}
+.pipe li.cur{color:var(--ink);font-weight:600}
+.pipe li.cur::before{border-color:var(--blue);color:var(--blue)}
+.pipe li.done::before{content:"✓";background:var(--green);border-color:var(--green);color:#fff}
+.pipe li small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));margin:0 auto;max-width:520px;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:15px;z-index:30;display:none}
+body.detail .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+.toast.err{background:var(--red);color:#fff}
+.empty{padding:28px 18px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--rule);border-radius:14px}
+@media (prefers-reduced-motion:no-preference){
+  .pipe li.cur::before{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 5px var(--blue-bg)}}
+  dialog.sheet[open]{animation:up .22s ease-out}
+  @keyframes up{from{transform:translateY(40px);opacity:.6}}
+}
+</style>
+</head>
+<body class="start">
+<div id="mockbar" class="mockbar" hidden>Mock mode: the AI step is scripted for local testing. Turn it off before judging.</div>
+<header class="appbar"><div class="col">
+  <div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round"/><path d="M4 12h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 17h12" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round"/></svg>ScopeClear</div>
+  <div class="proj" id="projname"></div>
+  <button class="me" id="me" onclick="askName()">Add your name</button>
+</div></header>
+
+<main class="col" id="main"></main>
+
+<nav class="nav" id="nav" aria-label="Sections"><div class="col">
+  <button data-tab="sources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Sources</button>
+  <button data-tab="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9" stroke="currentColor"/><path d="M4 12h16M4 17h11"/><path d="m16 5 2 2 3-3"/></svg>Review<span class="badge" id="b-review" hidden></span></button>
+  <button data-tab="checklist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 9 1.5 1.5L12 8M8 15l1.5 1.5L12 14M14 9h3M14 15h3"/></svg>Checklist</button>
+  <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
+</div></nav>
+
+<div class="overlay" id="overlay" role="status" aria-live="polite"><div class="pipe">
+  <h3 id="pipe-title">Comparing requests with the agreed scope</h3>
+  <p>Every finding is tied to a page or message before you see it.</p>
+  <ol id="pipe-steps"></ol>
+</div></div>
+
+<dialog class="sheet" id="sheet"><div class="grab"></div>
+  <div class="sh"><strong id="sh-title"></strong><button class="btn" style="min-height:40px" onclick="closeSheet()">Close</button></div>
+  <div class="sb" id="sh-body"></div>
+</dialog>
+<input type="file" id="filepick" hidden multiple accept=".pdf,.txt,audio/*,image/*">
+<div class="toast" id="toast" role="alert"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const attr = v => esc(JSON.stringify(v));
+let S = null, TAB = "sources", DETAIL = null, FILTER = "all", VERSION = null, ONLY_CHANGED = false, HEALTH = {};
+const drafts = {}, notes = {}, openEv = new Set();
+let pendingAction = null;
+
+const TYPE = {addition:"Addition", modification:"Changes agreed scope", contradiction:"Contradiction", unclear:"Needs details"};
+const ROLE = {agreed:"Agreed in proposal", requested:"New request", conflicting:"Conflicts with"};
+const STEPS = [
+  ["Reading every source", "PDF pages, voice notes, screenshots and chats get numbered references"],
+  ["Finding changes with Gemini", "Additions, changes, contradictions and missing details"],
+  ["Checking every quote", "Each quote must exist in the page or message it cites"],
+  ["Flagging unsupported numbers", "Amounts, counts and dates missing from the evidence"],
+  ["Waiting for a person", "The checklist changes only after someone approves"]];
+const ICON = {
+  pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>',
+  audio:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  image:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>',
+  text:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>'};
+const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>';
+
+const getName = () => { try { return localStorage.getItem("sc-who") || ""; } catch (e) { return ""; } };
+const setName = n => { try { localStorage.setItem("sc-who", n); } catch (e) {} };
+
+function toast(msg, err) {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast" + (err ? " err" : ""); t.style.display = "block";
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", err ? 6500 : 3200);
+}
+async function api(path, opts = {}) {
+  const r = await fetch(path, opts);
+  let data = null; try { data = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error((data && data.detail) || `Request failed (${r.status})`);
+  return data;
+}
+const post = (path, body) => api(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body || {})});
+
+let pipeTimer = null;
+function busy(on, title) {
+  const ov = $("#overlay");
+  if (!on) { clearInterval(pipeTimer); ov.classList.remove("on"); return; }
+  $("#pipe-title").textContent = title || "Comparing requests with the agreed scope";
+  let i = 0;
+  const draw = () => $("#pipe-steps").innerHTML = STEPS.map((s, k) => `<li class="${k < i ? "done" : k === i ? "cur" : ""}"><div>${s[0]}<small>${s[1]}</small></div></li>`).join("");
+  draw(); ov.classList.add("on");
+  pipeTimer = setInterval(() => { if (i < STEPS.length - 2) { i++; draw(); } }, 2600);
+}
+function setProject(state) {
+  S = state; history.replaceState(null, "", "#p=" + S.id);
+  if (VERSION && VERSION > S.checklist_version) VERSION = null;
+  render();
+}
+function go(tab) { TAB = tab; DETAIL = null; render(); window.scrollTo(0, 0); }
+
+/* ---------- sheets ---------- */
+function openSheet(title, html) { $("#sh-title").textContent = title; $("#sh-body").innerHTML = html; $("#sheet").showModal(); }
+function closeSheet() { $("#sheet").close(); }
+$("#sheet").addEventListener("click", e => { if (e.target.id === "sheet") closeSheet(); });
+
+function askName(then) {
+  pendingAction = then || null;
+  openSheet("Who is deciding?", `<p class="small muted" style="margin-top:0">Your name is saved with every approval, so the record shows who agreed to what.</p>
+    <input type="text" id="nameinput" placeholder="Your name" value="${esc(getName())}" autocomplete="name">
+    <button class="btn primary block" onclick="saveName()">Save name</button>`);
+  setTimeout(() => $("#nameinput")?.focus(), 50);
+}
+function saveName() {
+  const n = $("#nameinput").value.trim(); if (!n) return toast("Enter a name.", true);
+  setName(n); closeSheet(); updateMe();
+  const a = pendingAction; pendingAction = null; if (a) a();
+}
+function updateMe() { const n = getName(); $("#me").textContent = n ? n : "Add your name"; }
+
+function chunkById(id) { for (const s of S.sources) for (const c of s.chunks) if (c.id === id) return c; return null; }
+function showQuote(id, quote) {
+  const c = chunkById(id); if (!c) return toast("That reference is not in this project.", true);
+  let html = esc(c.text); const q = (quote || "").trim(), i = q ? c.text.toLowerCase().indexOf(q.toLowerCase()) : -1;
+  if (i >= 0) html = esc(c.text.slice(0, i)) + "<mark>" + esc(c.text.slice(i, i + q.length)) + "</mark>" + esc(c.text.slice(i + q.length));
+  openSheet(c.label, `<p class="xs muted" style="margin:0 0 8px">Reference ${c.id}. The highlighted words are the quote.</p><div class="txt">${html}</div>`);
+}
+function showSource(sid) {
+  const s = S.sources.find(x => x.id === sid); if (!s) return;
+  const locked = S.changes.some(c => c.status !== "pending");
+  openSheet(s.name, `<p class="xs muted" style="margin:0 0 6px">${s.role === "baseline" ? "Agreed scope" : "New request"}, reference ${s.id}</p>
+    ${s.chunks.map(c => `<div class="chunk"><b>${c.id}, ${esc(c.label)}</b><div>${esc(c.text)}</div></div>`).join("")}
+    ${locked ? "" : `<button class="btn reject block upload-ui" style="margin-top:14px" onclick="removeSource('${s.id}')">Remove this source</button>`}`);
+}
+function pasteSheet() {
+  openSheet("Paste a message", `<input type="text" id="pname" placeholder="Name, for example WhatsApp 16 Oct">
+    <textarea id="ptext" style="min-height:160px" placeholder="Paste the chat or email here"></textarea>
+    <button class="btn primary block" style="margin-top:10px" onclick="uploadText()">Add message</button>`);
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-cite]"); if (b) showQuote(JSON.parse(b.dataset.cite), JSON.parse(b.dataset.quote || '""'));
+});
+
+/* ---------- actions ---------- */
+async function loadDemo() {
+  busy(true, "Loading the fictional demo case");
+  try { TAB = "sources"; setProject(await post("/api/demo")); } catch (e) { toast(e.message, true); } finally { busy(false); }
+}
+async function newProject() {
+  const name = $("#newname").value.trim(); if (!name) return toast("Name the project first.", true);
+  try { TAB = "sources"; setProject(await post("/api/projects", {name})); } catch (e) { toast(e.message, true); }
+}
+let pickRole = "request";
+function pickFiles(role) { pickRole = role; const f = $("#filepick"); f.multiple = role === "request"; f.value = ""; f.click(); }
+$("#filepick").addEventListener("change", async e => {
+  const files = e.target.files; if (!files.length) return;
+  const fd = new FormData(); fd.append("role", pickRole); for (const f of files) fd.append("files", f);
+  busy(true, "Reading the new sources");
+  try { setProject(await api(`/api/projects/${S.id}/sources`, {method:"POST", body:fd})); toast("Source added."); } catch (er) { toast(er.message, true); } finally { busy(false); }
+});
+async function uploadText() {
+  const text = $("#ptext").value; if (!text.trim()) return toast("Paste the message first.", true);
+  const fd = new FormData(); fd.append("role", "request"); fd.append("text", text); fd.append("text_name", $("#pname").value);
+  closeSheet(); busy(true, "Reading the message");
+  try { setProject(await api(`/api/projects/${S.id}/sources`, {method:"POST", body:fd})); toast("Message added."); } catch (e) { toast(e.message, true); } finally { busy(false); }
+}
+async function removeSource(sid) {
+  closeSheet();
+  try { setProject(await api(`/api/projects/${S.id}/sources/${sid}`, {method:"DELETE"})); toast("Source removed."); } catch (e) { toast(e.message, true); }
+}
+async function analyse() {
+  busy(true);
+  try { TAB = "review"; DETAIL = null; FILTER = "all"; setProject(await post(`/api/projects/${S.id}/analyze`)); window.scrollTo(0, 0); }
+  catch (e) { TAB = "sources"; render(); toast(e.message, true); } finally { busy(false); }
+}
+async function decide(cid, decision) {
+  const who = getName();
+  if (!who) return askName(() => decide(cid, decision));
+  const ch = S.changes.find(c => c.id === cid);
+  const answers = {}; ch.questions.forEach(q => answers[q.id] = drafts[q.id] || "");
+  busy(true, decision === "approve" ? "Approving and updating the checklist" : "Recording the rejection");
+  try {
+    setProject(await post(`/api/projects/${S.id}/changes/${cid}/decision`, {decision, decided_by: who, answers, note: notes[cid] || ""}));
+    toast(decision === "approve" ? `Approved. Checklist is now version ${S.checklist_version}.` : "Rejected. The checklist is unchanged.");
+    window.scrollTo(0, 0);
+  } catch (e) { toast(e.message, true); } finally { busy(false); }
+}
+function openChange(cid) { DETAIL = cid; render(); window.scrollTo(0, 0); }
+function nextPending(fromId) {
+  const list = S.changes, i = list.findIndex(c => c.id === fromId);
+  return [...list.slice(i + 1), ...list.slice(0, i)].find(c => c.status === "pending");
+}
+const fmtTime = iso => iso ? new Date(iso).toLocaleString([], {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
+
+/* ---------- views ---------- */
+function viewStart() {
+  return `<div class="hero"><h1>Turn scattered client requests into clear, approved work</h1>
+    <p>See what the client changed, where they said it, and what still needs an answer. The task list updates only after you approve.</p>
+    <button class="btn primary block" onclick="loadDemo()">Try the demo case</button>
+    <p class="xs muted" style="margin:8px 0 0;text-align:center">Fictional hardware distributor: a proposal, a WhatsApp chat, two voice notes and a screenshot.</p>
+    <ol class="steps"><li>Add the agreed proposal and the client's new messages</li><li>See every change with the exact page or message it came from</li><li>Compare what was agreed with what is now asked</li><li>Answer the questions the client still needs to settle</li><li>Approve, and the checklist and history update</li></ol>
+    <div class="own own-project"><strong>Start your own project</strong><input id="newname" placeholder="Project name"><button class="btn block" onclick="newProject()">Create project</button></div></div>`;
+}
+
+function viewSources() {
+  const unit = k => ({pdf:"pages", audio:"segments", image:"items", text:"lines"})[k];
+  const row = s => `<button class="item" onclick="showSource('${s.id}')"><span class="ic">${ICON[s.kind]}</span><span class="tx"><div class="t1">${esc(s.name)}</div><div class="t2">${s.id}, ${s.chunks.length} ${unit(s.kind)}</div></span>${CHEV}</button>`;
+  const base = S.sources.filter(s => s.role === "baseline"), req = S.sources.filter(s => s.role === "request");
+  const ready = base.length && req.length;
+  return `<h2>Sources</h2><p class="sub">What was agreed, and what the client sent after.</p>
+    <section class="group"><div class="ghead"><h3>Agreed scope</h3><p>The proposal the client accepted</p></div>
+      ${base.map(row).join("") || `<div class="item muted small" style="cursor:default">Nothing added yet</div>`}
+      <div class="adders one upload-ui"><button class="btn" onclick="pickFiles('baseline')">Add proposal</button></div></section>
+    <section class="group"><div class="ghead"><h3>New requests</h3><p>In the order they arrived</p></div>
+      ${req.map(row).join("") || `<div class="item muted small" style="cursor:default">Nothing added yet</div>`}
+      <div class="adders upload-ui"><button class="btn" onclick="pickFiles('request')">Add file</button><button class="btn" onclick="pasteSheet()">Paste message</button></div></section>
+    <div class="cta"><div class="col"><button class="btn primary block" ${ready ? "" : "disabled"} onclick="analyse()">${S.last_analysis ? "Find changes again" : "Find changes"}</button>
+      <div class="xs muted">${ready ? (S.last_analysis ? "Decisions already made are kept." : "Usually takes under a minute.") : "Add the agreed scope and at least one request."}</div></div></div>`;
+}
+
+function viewReview() {
+  if (!S.last_analysis) return `<h2>Review</h2><div class="empty">Nothing to review yet.<p><button class="btn primary" onclick="go('sources')">Go to sources</button></p></div>`;
+  const all = S.changes, done = all.filter(c => c.status !== "pending").length, a = S.last_analysis;
+  const openQ = all.filter(c => c.status === "pending").reduce((n, c) => n + c.questions.length, 0);
+  const names = {all:"All", pending:"To decide", contradiction:"Contradictions", modification:"Changes", addition:"Additions", unclear:"Needs details", decided:"Decided"};
+  const list = all.filter(c => FILTER === "all" || (FILTER === "pending" ? c.status === "pending" : FILTER === "decided" ? c.status !== "pending" : c.type === FILTER));
+  const first = all.find(c => c.status === "pending");
+  return `<h2>Review changes</h2>
+    <div class="progress"><div class="bar"><i style="width:${all.length ? done / all.length * 100 : 0}%"></i></div>
+      <div class="plabel"><span>${done} of ${all.length} decided</span><span>${a.quotes_verified} of ${a.quotes} quotes verified</span></div></div>
+    <div class="summary"><div><b>${all.length}</b><span>changes found</span></div><div><b>${openQ}</b><span>open questions</span></div><div><b class="${a.flagged ? "bad" : ""}">${a.flagged}</b><span>flagged</span></div></div>
+    ${first ? `<button class="btn primary block" style="margin-bottom:14px" onclick="openChange('${first.id}')">${done ? "Continue reviewing" : "Start reviewing"}</button>` : `<div class="result approved" style="margin:0 0 14px"><strong>All changes decided</strong><span class="small">See the updated checklist.</span><p style="margin:8px 0 0"><button class="btn block" onclick="go('checklist')">Open checklist</button></p></div>`}
+    <div class="chips">${Object.keys(names).map(t => `<button aria-pressed="${FILTER === t}" onclick="FILTER='${t}';render()">${names[t]}</button>`).join("")}</div>
+    <section class="group">${list.map(c => `<button class="item" onclick="openChange('${c.id}')"><span class="dot ${c.type}"></span><span class="tx"><div class="t1">${esc(c.title)}</div><div class="t2">${TYPE[c.type]}${c.questions.length ? `, ${c.questions.length} question${c.questions.length > 1 ? "s" : ""}` : ""}${c.verified ? "" : ", needs checking"}</div></span><span class="pill ${c.status}">${c.status === "pending" ? "To decide" : c.status === "approved" ? "Approved" : "Rejected"}</span></button>`).join("") || `<div class="item muted small">Nothing in this view.</div>`}</section>`;
+}
+
+function blockingOpen(ch) { return ch.questions.filter(q => q.blocking && !(drafts[q.id] || "").trim()).length; }
+function hintFor(ch) {
+  const open = blockingOpen(ch);
+  if (open) return `Answer ${open} required question${open > 1 ? "s" : ""} to approve`;
+  if (!ch.verified && !(notes[ch.id] || "").trim()) return "Add a note to approve. Some evidence is not verified";
+  return getName() ? `Deciding as ${getName()}` : "You'll be asked for your name";
+}
+function canApprove(ch) { return !blockingOpen(ch) && (ch.verified || (notes[ch.id] || "").trim()); }
+
+function viewDetail(ch) {
+  const pending = ch.status === "pending", i = S.changes.indexOf(ch);
+  const none = ch.previously_agreed.trim().toLowerCase().startsWith("not covered");
+  const allOk = ch.evidence.every(e => e.verified), shown = openEv.has(ch.id);
+  const evRows = ch.evidence.map(e => `<button class="ev" data-cite="${attr(e.source_id)}" data-quote="${attr(e.quote)}"><span class="role">${ROLE[e.role] || e.role}</span><q>${esc(e.quote)}</q>
+    <span class="meta"><span class="src">${esc(e.label || e.source_id)}</span>${e.verified ? `<span class="ok">✓ ${esc(e.check)}</span>` : `<span class="bad">Not verified: ${esc(e.check)}</span>`}</span></button>`).join("");
+  const qs = ch.questions.map(q => `<div class="q">${q.blocking ? `<span class="req">Required</span>` : `<span class="opt">Optional</span>`}
+      <label for="a-${q.id}">${esc(q.question)}</label><div class="why">${esc(q.why_needed)}</div>
+      ${pending ? `<textarea id="a-${q.id}" data-q="${q.id}" rows="2" placeholder="Client's answer">${esc(drafts[q.id] || "")}</textarea>` : `<div class="ans">${esc(ch.decision?.answers?.[q.id] || "Not answered")}</div>`}</div>`).join("");
+  const d = ch.decision || {};
+  const result = pending ? "" : `<div class="result ${ch.status}"><strong>${ch.status === "approved" ? "Approved" : "Rejected"} by ${esc(d.by)}</strong><span class="xs muted">${fmtTime(d.at)}</span>
+    ${d.note ? `<p class="small" style="margin:6px 0 0">Note: ${esc(d.note)}</p>` : ""}
+    ${d.checklist_ops?.length ? `<ul>${d.checklist_ops.map(o => `<li>${({add:"Added", update:"Updated", remove:"Removed"})[o.op]} ${o.task_id}: ${esc(o.title)}</li>`).join("")}</ul>` : ch.status === "rejected" ? `<p class="small" style="margin:6px 0 0">The checklist was not changed.</p>` : ""}</div>`;
+  return `<div class="dtop"><button class="link" onclick="DETAIL=null;render()">‹ All changes</button><span class="xs muted">${i + 1} of ${S.changes.length}</span></div>
+    <span class="tag ${ch.type}">${TYPE[ch.type]}</span>
+    <h2 class="dtitle">${esc(ch.title)}</h2>
+    <div class="redline">
+      <div class="side was ${none ? "none" : ""}"><div class="lbl">Previously agreed</div><p>${esc(ch.previously_agreed)}</p></div>
+      <div class="arrow" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 5v13m-5-5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="side now"><div class="lbl">New request</div><p>${esc(ch.new_request)}</p></div>
+    </div>
+    <div class="section"><h4>Where this comes from</h4>
+      <button class="evsum" onclick="openEv.has('${ch.id}')?openEv.delete('${ch.id}'):openEv.add('${ch.id}');render()" aria-expanded="${shown}">
+        <span>${ch.evidence.length} quote${ch.evidence.length > 1 ? "s" : ""} from ${new Set(ch.evidence.map(e => e.source_id.split("-")[0])).size} source${new Set(ch.evidence.map(e => e.source_id.split("-")[0])).size > 1 ? "s" : ""}, ${allOk ? `<b class="ok">all verified</b>` : `<b class="bad">some not verified</b>`}</span>
+        <span class="link">${shown ? "Hide" : "Show"}</span></button>
+      ${shown ? `<div class="evlist">${evRows}</div><p class="xs muted" style="margin:6px 2px 0">Tap a quote to see it in the original.</p>` : ""}
+      ${ch.issues?.length ? `<div class="issues">${ch.issues.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}</div>
+    ${ch.questions.length ? `<div class="section"><h4>${pending ? "Questions for the client" : "Answers recorded"}</h4>${qs}</div>` : pending ? `<div class="section"><p class="small muted">No missing details. Ready to decide.</p></div>` : ""}
+    ${pending ? `<div class="section note"><h4>Note for the record</h4><textarea id="note-${ch.id}" data-note="${ch.id}" rows="2" placeholder="Optional${ch.verified ? "" : ", but required to approve this one"}">${esc(notes[ch.id] || "")}</textarea></div>` : ""}
+    ${result}`;
+}
+
+function actionBar(ch) {
+  if (ch.status === "pending") return `<div class="actionbar"><div class="col"><p class="hint" id="hint">${esc(hintFor(ch))}</p>
+    <div class="row"><button class="btn reject" onclick="decide('${ch.id}','reject')">Reject</button>
+    <button class="btn approve" id="approveBtn" ${canApprove(ch) ? "" : "disabled"} onclick="decide('${ch.id}','approve')">Approve change</button></div></div></div>`;
+  const nx = nextPending(ch.id);
+  return `<div class="actionbar"><div class="col"><div class="row nav2"><button class="btn" onclick="DETAIL=null;render()">All changes</button>
+    ${nx ? `<button class="btn primary" onclick="openChange('${nx.id}')">Next change</button>` : `<button class="btn primary" onclick="go('checklist')">Open checklist</button>`}</div></div></div>`;
+}
+
+function viewChecklist() {
+  if (!S.checklist_version) return `<h2>Checklist</h2><div class="empty">The checklist is made from the agreed scope the first time you find changes.</div>`;
+  const v = VERSION || S.checklist_version, ver = S.versions.find(x => x.version === v) || {tasks:S.checklist, reason:""};
+  const changed = t => t.origin !== "original scope" || t.status !== "active";
+  const tasks = ONLY_CHANGED ? ver.tasks.filter(changed) : ver.tasks;
+  const nAdd = ver.tasks.filter(t => t.origin !== "original scope").length, nUpd = ver.tasks.filter(t => t.status === "updated").length, nRem = ver.tasks.filter(t => t.status === "removed").length;
+  return `<h2>Checklist</h2><p class="sub">${esc(ver.reason)}${ver.at ? ", " + fmtTime(ver.at) : ""}</p>
+    <div class="summary"><div><b>${ver.tasks.length - nRem}</b><span>tasks</span></div><div><b class="lab-upd">${nUpd}</b><span>updated</span></div><div><b class="lab-new">${nAdd}</b><span>added</span></div></div>
+    <div class="toolbar"><select aria-label="Version" onchange="VERSION=+this.value;render()">${S.versions.map(x => `<option value="${x.version}" ${x.version === v ? "selected" : ""}>Version ${x.version}${x.version === S.checklist_version ? " (current)" : ""}</option>`).join("")}</select>
+      <label class="toggle"><input type="checkbox" ${ONLY_CHANGED ? "checked" : ""} onchange="ONLY_CHANGED=this.checked;render()">Only changes</label></div>
+    <section class="group">${tasks.map(t => {
+      const last = t.changes?.[t.changes.length - 1];
+      const from = t.origin === "original scope" ? (t.source_id ? `<button data-cite="${attr(t.source_id)}" data-quote="${attr(t.quote)}">${esc(t.label)}</button>` : "") : `<span class="lab-new">Added by ${t.origin}</span>`;
+      return `<div class="task ${t.status}"><span class="tid">${t.id}</span><div class="tx">${t.status === "updated" && last?.before ? `<div class="was">${esc(last.before)}</div>` : ""}<div class="ttl">${esc(t.title)}</div>
+        <div class="from">${from}${t.status === "updated" ? `<span class="lab-upd">Updated by ${last?.change_id}</span>` : ""}${t.status === "removed" ? `<span class="bad">Removed by ${last?.change_id}</span>` : ""}</div></div></div>`;
+    }).join("") || `<div class="task muted small">No changes in this version yet.</div>`}</section>`;
+}
+
+function viewHistory() {
+  const items = [...S.history].reverse().map(h => {
+    let what = "", det = "", cls = "";
+    if (h.type === "source_added") what = `Added ${h.role === "baseline" ? "agreed scope" : "request"}: ${esc(h.name)}`;
+    else if (h.type === "source_removed") what = `Removed source ${h.source_id}`;
+    else if (h.type === "baseline_checklist") what = `Checklist version ${h.version} made from the agreed scope`;
+    else if (h.type === "analysis_run") { what = `Found ${h.changes} changes`; det = `${h.questions} questions, ${h.quotes_verified} of ${h.quotes} quotes verified, model ${esc(h.model)}`; }
+    else if (h.type === "change_approved") { cls = "approved"; what = `${esc(h.by)} approved: ${esc(h.title)}`;
+      det = `Checklist version ${h.checklist_from} to ${h.checklist_to}.` +
+        (h.answers?.length ? `<br><br>${h.answers.map(x => `${esc(x.question)}<br><strong>${esc(x.answer || "Not answered")}</strong>`).join("<br><br>")}` : "") +
+        (h.evidence?.length ? `<br><br>Evidence:<br>${h.evidence.map(e => `${esc(e.label)}: <q>${esc(e.quote)}</q>`).join("<br>")}` : "") + (h.note ? `<br><br>Note: ${esc(h.note)}` : ""); }
+    else if (h.type === "change_rejected") { cls = "rejected"; what = `${esc(h.by)} rejected: ${esc(h.title)}`; det = h.note ? "Note: " + esc(h.note) : ""; }
+    return `<li class="${cls}"><div class="when">${fmtTime(h.at)}</div><div class="what">${what}</div>${det ? `<details><summary>Details</summary><div class="det">${det}</div></details>` : ""}</li>`;
+  }).join("");
+  return `<h2>History</h2><p class="sub">Every decision keeps who made it, when, the answers and the evidence. Nothing is overwritten.</p><ul class="hist">${items}</ul>`;
+}
+
+function render() {
+  $("#mockbar").hidden = !HEALTH.mock; updateMe();
+  const main = $("#main");
+  document.body.className = "";
+  if (!S) { document.body.classList.add("start"); $("#projname").textContent = ""; main.innerHTML = viewStart(); return; }
+  $("#projname").textContent = S.name;
+  const pend = S.changes.filter(c => c.status === "pending").length, b = $("#b-review");
+  b.hidden = !pend; b.textContent = pend;
+  document.querySelectorAll(".nav [data-tab]").forEach(x => x.dataset.tab === TAB ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"));
+  const ch = TAB === "review" && DETAIL ? S.changes.find(c => c.id === DETAIL) : null;
+  if (ch) { document.body.classList.add("detail"); main.innerHTML = viewDetail(ch) + actionBar(ch); return; }
+  if (TAB === "sources") document.body.classList.add("has-cta");
+  main.innerHTML = ({sources:viewSources, review:viewReview, checklist:viewChecklist, history:viewHistory})[TAB]();
+}
+
+document.addEventListener("input", e => {
+  const q = e.target.dataset?.q, n = e.target.dataset?.note;
+  if (q) drafts[q] = e.target.value; else if (n) notes[n] = e.target.value; else return;
+  const ch = S.changes.find(c => c.id === DETAIL); if (!ch) return;
+  const btn = $("#approveBtn"); if (btn) btn.disabled = !canApprove(ch);
+  const h = $("#hint"); if (h) h.textContent = hintFor(ch);
+});
+document.querySelectorAll(".nav [data-tab]").forEach(b => b.onclick = () => go(b.dataset.tab));
+
+(async () => {
+  try { HEALTH = await api("/api/health"); } catch (e) {}
+  const m = location.hash.match(/p=([\w-]+)/);
+  if (m) { try { S = await api("/api/projects/" + m[1]); TAB = S.last_analysis ? "review" : "sources"; } catch (e) { toast(e.message, true); } }
+  render();
+})();
+</script>
+</body>
+</html>

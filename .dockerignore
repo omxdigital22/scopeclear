@@ -1,0 +1,11 @@
+.env
+*.json.key
+*-key.json
+service-account*.json
+__pycache__/
+.pytest_cache/
+eval/results.json
+.venv/
+.git
+tests/
+eval/

@@ -1,0 +1,13 @@
+{
+  "note": "Planted changes in the fictional demo case. Edit or add cases; report only what run_eval.py measures.",
+  "changes": [
+    {"key": "partial", "type": "modification", "match_any": ["partial", "part payment", "multiple account", "second bank"], "must_ask": true},
+    {"key": "whatsapp", "type": "contradiction", "match_any": ["whatsapp", "reminder"], "must_ask": false},
+    {"key": "excel", "type": "contradiction", "match_any": ["excel"], "must_ask": false},
+    {"key": "users", "type": "modification", "match_any": ["user"], "must_ask": false},
+    {"key": "discount", "type": "unclear", "match_any": ["discount"], "must_ask": true},
+    {"key": "gstin", "type": "addition", "match_any": ["gstin"], "must_ask": false},
+    {"key": "delivered", "type": "addition", "match_any": ["delivered", "delivery person", "delivered by"], "must_ask": false}
+  ],
+  "forbidden_numbers": ["discount percentages, account numbers or reminder days are never stated in the sources"]
+}

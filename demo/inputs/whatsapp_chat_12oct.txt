@@ -1,0 +1,5 @@
+[12/10/2026, 10:14] Rahul (Kestrel): Hi team, few changes after our meeting
+[12/10/2026, 10:15] Rahul (Kestrel): Please send payment reminders to customers on WhatsApp
+[12/10/2026, 10:16] Rahul (Kestrel): Daily collections report should come in Excel also
+[12/10/2026, 10:18] Rahul (Kestrel): We need only 3 users now, not 5
+[12/10/2026, 10:19] Rahul (Kestrel): Thanks

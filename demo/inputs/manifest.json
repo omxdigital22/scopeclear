@@ -1,0 +1,7 @@
+[
+  {"file": "proposal_v1.pdf", "role": "baseline", "name": "Proposal v1.0 (2 Oct)"},
+  {"file": "whatsapp_chat_12oct.txt", "role": "request", "name": "WhatsApp chat (12 Oct)"},
+  {"file": "voice_note_1_13oct.mp3", "role": "request", "name": "Voice note 1 (13 Oct)"},
+  {"file": "voice_note_2_14oct.mp3", "role": "request", "name": "Voice note 2 (14 Oct)"},
+  {"file": "invoice_note_15oct.png", "role": "request", "name": "Screenshot (15 Oct)"}
+]

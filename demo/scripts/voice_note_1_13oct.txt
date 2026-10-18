@@ -1,0 +1,6 @@
+Hi, Rahul here from Kestrel.
+One important thing. Many customers do not pay the full amount at once.
+Someone pays part in cash and the rest later by UPI.
+And the UPI money comes into our second bank account, not the main one.
+So the system should handle partial payments across multiple accounts.
+Please make sure the balance is tracked properly.
